@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>particle.play</title>
+  <link rel="icon" type="image/x-icon" href="particleplay.ico">
+  <style>
+    html, body {
+      margin: 0;
+      overflow: hidden;
+      background: #10101f;
+    }
+    canvas {
+      display: block;
+    }
+
+    #settingsBtn {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      font-size: 20px;
+      background: #222;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    #settingsModal {
+      position: fixed;
+      top: 60px;
+      left: 20px;
+      background: #1a1a2a;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      display: none;
+      z-index: 2;
+      width: 200px;
+    }
+
+    #settingsModal h2 {
+      margin-top: 0;
+      font-size: 16px;
+    }
+
+    #settingsModal .colors button,
+    #settingsModal .modes button {
+      margin: 5px 0;
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      background: #333;
+    }
+
+    #settingsModal .colors button[data-color="120"] { background: hsl(120, 100%, 40%); }
+    #settingsModal .colors button[data-color="200"] { background: hsl(200, 100%, 45%); }
+    #settingsModal .colors button[data-color="300"] { background: hsl(300, 100%, 50%); }
+    #settingsModal .colors button[data-color="45"]  { background: hsl(45, 100%, 50%); }
+    #muteBtn {
+    margin: 5px 0;
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    background: #333;
+    transition: background-color 0.3s ease; /* Smooth transition for background color */
+  }
+
+    #settingsModal hr {
+      border: none;
+      border-top: 1px solid #444;
+      margin: 10px 0;
+    }
+
+    #blurSlider {
+      width: 100%;
+    }
+
+    #advancedToggle {
+      margin-top: 10px;
+      background: #333;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    #advancedSettings {
+      display: none;
+      margin-top: 10px;
+    }
+
+    #customColor {
+      width: 100%;
+      margin-top: 5px;
+    }
+
+    /* Spotify Player */
+    #spotifyPlayer {
+      margin-top: 20px;
+      background: #222;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    #spotifyPlayer iframe {
+      width: 100%;
+      height: 380px;
+      border: none;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <audio autoplay loop style="display: none;">
+    <source src="audio_a6eb2b47dc.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+  <canvas id="canvas"></canvas>
+  <button id="settingsBtn">⚙️</button>
+  <div id="settingsModal">
+    <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Choose Particle Color</h2>
+    <div class="colors">
+      <button data-color="120" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Green</button>
+      <button data-color="200" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Blue</button>
+      <button data-color="300" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Pink</button>
+      <button data-color="45" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Orange</button>
+    </div>
+    <hr />
+    <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Game Mode</h2>
+    <div class="modes">
+      <button data-mode="zen" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Float</button>
+      <button data-mode="bounce" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Normal</button>
+      <button data-mode="chaos" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Intense Gravity</button>
+    </div>
+    <hr />
+    <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Motion Blur</h2>
+    <input id="blurSlider" type="range" min="0" max="0.75" step="0.01" value="0">
+    <hr />
+    <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Audio</h2>
+    <button id="muteBtn" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Mute</button>
+    
+  </div>
+ 
+  <button id="advancedToggle" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Advanced Settings ▼</button>
+  <div id="advancedSettings">
+    <label for="customColor" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Custom Color:</label>
+    <input type="color" id="customColor" />
+  </div>
+  <script>
+    const audioElement = document.querySelector("audio");
+    const muteBtn = document.getElementById("muteBtn");
+
+    // Function to update the mute button's style
+    function updateMuteButton() {
+      if (audioElement.muted || audioElement.volume === 0) {
+        muteBtn.textContent = "Unmute";
+        muteBtn.style.background = "grey"; // Grey when muted
+      } else {
+        muteBtn.textContent = "Mute";
+        muteBtn.style.background = "red"; // Red when playing
+      }
+    }
+
+    // Function to apply a crossfade effect
+    function crossfadeAudio(targetVolume, duration = 500) {
+      const startVolume = audioElement.volume;
+      const volumeStep = (targetVolume - startVolume) / (duration / 50); // Adjust every 50ms
+      let currentVolume = startVolume;
+
+      const fadeInterval = setInterval(() => {
+        currentVolume += volumeStep;
+        if (
+          (volumeStep > 0 && currentVolume >= targetVolume) || 
+          (volumeStep < 0 && currentVolume <= targetVolume)
+        ) {
+          currentVolume = targetVolume;
+          clearInterval(fadeInterval);
+        }
+        audioElement.volume = Math.max(0, Math.min(1, currentVolume)); // Clamp volume between 0 and 1
+      }, 50);
+    }
+
+    // Initial button style
+    updateMuteButton();
+
+    // Mute/Unmute functionality with crossfade
+    muteBtn.addEventListener("click", () => {
+      if (audioElement.volume > 0 && !audioElement.muted) {
+        crossfadeAudio(0); // Fade out
+        setTimeout(() => {
+          audioElement.muted = true; // Mute after fade-out
+          updateMuteButton(); // Update button after muting
+        }, 500); // Match the crossfade duration
+      } else {
+        audioElement.muted = false; // Unmute before fade-in
+        crossfadeAudio(1); // Fade in
+        setTimeout(() => {
+          updateMuteButton(); // Update button after unmuting
+        }, 500); // Match the crossfade duration
+      }
+    });
+
+    // Ensure audio plays after user interaction
+    document.body.addEventListener("click", () => {
+      if (audioElement.paused) {
+        audioElement.play().catch((error) => {
+          console.error("Audio playback failed:", error);
+        });
+      }
+    }, { once: true }); // Ensures this runs only once
+  </script>
+
+  <script>
+    let hueBase = parseInt(localStorage.getItem("slimeHue")) || 120;
+    let mode = localStorage.getItem("slimeMode") || "bounce";
+    let gravity = 0.1;
+    let bounce = 0.7;
+    let friction = 0.98;
+    let maxParticles = 300;
+    let settingsOpen = false;
+    let motionBlur = parseFloat(localStorage.getItem("motionBlur")) || 0.3;
+
+    function applyModeSettings() {
+      if (mode === "zen") {
+        gravity = 0;
+        bounce = 0;
+        friction = 0.99;
+      } else if (mode === "bounce") {
+        gravity = 0.1;
+        bounce = 0.7;
+        friction = 0.98;
+      } else if (mode === "chaos") {
+        gravity = 0.4;
+        bounce = 1;
+        friction = 0.95;
+      }
+    }
+
+    applyModeSettings();
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Update mouse object to support touch and pointer events
+    let mouse = { x: canvas.width / 2, y: canvas.height / 2, pressure: 0 };
+
+    // Handle touch events
+    canvas.addEventListener("touchstart", (e) => {
+      const touch = e.touches[0];
+      mouse.x = touch.clientX;
+      mouse.y = touch.clientY;
+      mouse.pressure = 1; // Simulate full pressure for touch
+      handleInteractionStart();
+    });
+
+    canvas.addEventListener("touchmove", (e) => {
+      const touch = e.touches[0];
+      mouse.x = touch.clientX;
+      mouse.y = touch.clientY;
+      mouse.pressure = 1; // Simulate full pressure for touch
+      handleInteractionMove();
+    });
+
+    canvas.addEventListener("touchend", () => {
+      mouse.pressure = 0;
+      handleInteractionEnd();
+    });
+
+    // Handle pointer events (for Apple Pencil and other styluses)
+    canvas.addEventListener("pointerdown", (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+      mouse.pressure = e.pressure || 1; // Use pressure if available
+      handleInteractionStart();
+    });
+
+    canvas.addEventListener("pointermove", (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+      mouse.pressure = e.pressure || 1; // Use pressure if available
+      handleInteractionMove();
+    });
+
+    canvas.addEventListener("pointerup", () => {
+      mouse.pressure = 0;
+      handleInteractionEnd();
+    });
+
+    // Interaction handlers
+    function handleInteractionStart() {
+      if (!settingsOpen) {
+        for (let i = 0; i < 15; i++) {
+          particles.push(new Particle(mouse.x, mouse.y, true));
+        }
+      }
+    }
+
+    function handleInteractionMove() {
+      if (!settingsOpen) {
+        for (let i = 0; i < 2; i++) {
+          particles.push(new Particle(mouse.x, mouse.y));
+        }
+      }
+    }
+
+    function handleInteractionEnd() {
+      // Optional: Add logic for when interaction ends
+    }
+
+    let lastMouseTime = Date.now();
+    let isMouseIdle = false;
+    let lastMouseX = mouse.x;
+    let lastMouseY = mouse.y;
+    let mouseMoved = false;
+
+    const particles = [];
+
+    window.addEventListener("mousemove", (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+
+      if (mouse.x !== lastMouseX || mouse.y !== lastMouseY) {
+        mouseMoved = true;
+        lastMouseTime = Date.now();
+        lastMouseX = mouse.x;
+        lastMouseY = mouse.y;
+      }
+    });
+
+    window.addEventListener("mousedown", () => {
+      if (!settingsOpen) {
+        for (let i = 0; i < 15; i++) {
+          particles.push(new Particle(mouse.x, mouse.y, true));
+        }
+      }
+    });
+
+    class Particle {
+      constructor(x, y, burst = false) {
+        this.x = x;
+        this.y = y;
+        const speed = burst ? 6 : 3;
+        this.vx = (Math.random() - 0.5) * speed;
+        this.vy = (Math.random() - 0.5) * speed;
+        this.radius = Math.random() * 6 + 2;
+        this.hue = hueBase + Math.floor(Math.random() * 30 - 15);
+        this.color = `hsla(${this.hue}, 100%, 70%, 1)`;
+      }
+
+      update() {
+        if (isMouseIdle && mode === "zen") {
+          this.vy += 0.005 * (Math.random() - 0.5);
+          this.vx += 0.005 * (Math.random() - 0.5);
+        } else {
+          this.vy += gravity;
+        }
+
+        this.vx *= friction;
+        this.vy *= friction;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0 || this.x > canvas.width) {
+          this.vx *= -bounce;
+          this.x = Math.max(0, Math.min(this.x, canvas.width));
+        }
+        if (this.y < 0 || this.y > canvas.height) {
+          this.vy *= -bounce;
+          this.y = Math.max(0, Math.min(this.y, canvas.height));
+        }
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = this.color;
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function connectParticles(particles) {
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 60) {
+            const opacity = 1 - dist / 60;
+            ctx.beginPath();
+            ctx.strokeStyle = `hsla(${particles[i].hue}, 100%, 70%, ${opacity})`;
+            ctx.lineWidth = 2;
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function animate() {
+      const now = Date.now();
+      isMouseIdle = now - lastMouseTime > 1000;
+
+      ctx.fillStyle = `rgba(15, 15, 31, ${1 - motionBlur})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (!isMouseIdle && mouseMoved && !settingsOpen) {
+        for (let i = 0; i < 2; i++) {
+          particles.push(new Particle(mouse.x, mouse.y));
+        }
+        mouseMoved = false;
+      }
+
+      if (particles.length > maxParticles) {
+        particles.splice(0, particles.length - maxParticles);
+      }
+
+      for (const p of particles) {
+        p.update();
+        p.draw();
+      }
+
+      connectParticles(particles);
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsModal = document.getElementById("settingsModal");
+
+    settingsBtn.addEventListener("click", () => {
+      settingsOpen = !settingsOpen;
+      settingsModal.style.display = settingsOpen ? "block" : "none";
+    });
+
+    document.querySelectorAll("#settingsModal .colors button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        hueBase = parseInt(btn.dataset.color);
+        localStorage.setItem("slimeHue", hueBase);
+        settingsOpen = false;
+        settingsModal.style.display = "none";
+      });
+    });
+
+    document.querySelectorAll("#settingsModal .modes button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        mode = btn.dataset.mode;
+        localStorage.setItem("slimeMode", mode);
+        applyModeSettings();
+        settingsOpen = false;
+        settingsModal.style.display = "none";
+      });
+    });
+
+    document.getElementById("blurSlider").addEventListener("input", (e) => {
+      motionBlur = parseFloat(e.target.value);
+      localStorage.setItem("motionBlur", motionBlur);
+    });
+  </script>
+</body>
+</html>
