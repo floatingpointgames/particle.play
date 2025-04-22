@@ -128,15 +128,39 @@
       border: none;
       border-radius: 6px;
     }
+
+    #playOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 24px;
+      z-index: 10;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+  <div id="playOverlay">
+    <h1>click to play</h1>
+  </div>
+  
   <audio autoplay loop style="display: none;">
     <source src="audio_a6eb2b47dc.mp3" type="audio/mpeg">
     Your browser does not support the audio element.
   </audio>
+  
   <canvas id="canvas"></canvas>
+  
   <button id="settingsBtn">⚙️</button>
+  
   <div id="settingsModal">
     <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Choose Particle Color</h2>
     <div class="colors">
@@ -166,6 +190,7 @@
   <script>
     const audioElement = document.querySelector("audio");
     const muteBtn = document.getElementById("muteBtn");
+    let gameRunning = false;
 
     // Function to update the mute button's style
     function updateMuteButton() {
@@ -226,10 +251,38 @@
       }
     }, { once: true }); // Ensures this runs only once
 
-    // Prevent zooming and default touch gestures
-    document.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
-    document.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
+    // Prevent zooming and default touch gestures, but allow interaction with the settings button
+    document.addEventListener("touchstart", (e) => {
+      if (e.target.id !== "settingsBtn" && !e.target.closest("#settingsModal")) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    document.addEventListener("touchmove", (e) => {
+      if (e.target.id !== "settingsBtn" && !e.target.closest("#settingsModal")) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+    
     document.addEventListener("gesturestart", (e) => e.preventDefault());
+
+    const playOverlay = document.getElementById("playOverlay");
+
+    playOverlay.addEventListener("click", () => {
+      // Hide the overlay
+      playOverlay.style.display = "none";
+
+      // Start the audio
+      if (audioElement.paused) {
+        audioElement.play().catch((error) => {
+          console.error("Audio playback failed:", error);
+        });
+      }
+
+      // Start the game
+      gameRunning = true;
+      animate(); // Start the animation loop
+    });
   </script>
 
   <script>
@@ -409,6 +462,8 @@
     }
 
     function animate() {
+      if (!gameRunning) return; // Stop the animation if the game is not running
+
       const now = Date.now();
       isMouseIdle = now - lastMouseTime > 1000;
 
