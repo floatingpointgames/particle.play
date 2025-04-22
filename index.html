@@ -9,6 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="particle.play">
   <link rel="apple-touch-icon" href="particleplay_highres.png"> <!-- or your preferred icon -->
   <link rel="manifest" href="/manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
 
   <style>
@@ -159,9 +160,6 @@
     <button id="muteBtn" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Mute</button>
     
   </div>
- 
-  <button id="advancedToggle" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Advanced Settings ▼</button>
-  <div id="advancedSettings">
     <label for="customColor" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Custom Color:</label>
     <input type="color" id="customColor" />
   </div>
@@ -227,6 +225,11 @@
         });
       }
     }, { once: true }); // Ensures this runs only once
+
+    // Prevent zooming and default touch gestures
+    document.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
+    document.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
+    document.addEventListener("gesturestart", (e) => e.preventDefault());
   </script>
 
   <script>
@@ -265,61 +268,49 @@
     // Update mouse object to support touch and pointer events
     let mouse = { x: canvas.width / 2, y: canvas.height / 2, pressure: 0 };
 
-    // Handle touch events
+    // Update touchstart to handle multiple touches
     canvas.addEventListener("touchstart", (e) => {
-      const touch = e.touches[0];
-      mouse.x = touch.clientX;
-      mouse.y = touch.clientY;
-      mouse.pressure = 1; // Simulate full pressure for touch
-      handleInteractionStart();
+      for (const touch of e.touches) {
+        const x = touch.clientX;
+        const y = touch.clientY;
+        mouse.x = x;
+        mouse.y = y;
+        mouse.pressure = 1; // Simulate full pressure for touch
+        handleInteractionStart(x, y);
+      }
     });
 
+    // Update touchmove to handle multiple touches
     canvas.addEventListener("touchmove", (e) => {
-      const touch = e.touches[0];
-      mouse.x = touch.clientX;
-      mouse.y = touch.clientY;
-      mouse.pressure = 1; // Simulate full pressure for touch
-      handleInteractionMove();
+      for (const touch of e.touches) {
+        const x = touch.clientX;
+        const y = touch.clientY;
+        mouse.x = x;
+        mouse.y = y;
+        mouse.pressure = 1; // Simulate full pressure for touch
+        handleInteractionMove(x, y);
+      }
     });
 
-    canvas.addEventListener("touchend", () => {
+    // Update touchend to handle multiple touches
+    canvas.addEventListener("touchend", (e) => {
       mouse.pressure = 0;
       handleInteractionEnd();
     });
 
-    // Handle pointer events (for Apple Pencil and other styluses)
-    canvas.addEventListener("pointerdown", (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-      mouse.pressure = e.pressure || 1; // Use pressure if available
-      handleInteractionStart();
-    });
-
-    canvas.addEventListener("pointermove", (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-      mouse.pressure = e.pressure || 1; // Use pressure if available
-      handleInteractionMove();
-    });
-
-    canvas.addEventListener("pointerup", () => {
-      mouse.pressure = 0;
-      handleInteractionEnd();
-    });
-
-    // Interaction handlers
-    function handleInteractionStart() {
+    // Modify interaction handlers to accept coordinates
+    function handleInteractionStart(x, y) {
       if (!settingsOpen) {
         for (let i = 0; i < 15; i++) {
-          particles.push(new Particle(mouse.x, mouse.y, true));
+          particles.push(new Particle(x, y, true));
         }
       }
     }
 
-    function handleInteractionMove() {
+    function handleInteractionMove(x, y) {
       if (!settingsOpen) {
         for (let i = 0; i < 2; i++) {
-          particles.push(new Particle(mouse.x, mouse.y));
+          particles.push(new Particle(x, y));
         }
       }
     }
