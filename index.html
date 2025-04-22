@@ -145,6 +145,10 @@
       z-index: 10;
       cursor: pointer;
     }
+
+    #textStyling{
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
   </style>
 </head>
 <body>
@@ -162,30 +166,29 @@
   <button id="settingsBtn">⚙️</button>
   
   <div id="settingsModal">
-    <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Choose Particle Color</h2>
+    <h2 id="textStyling">Choose Particle Color</h2>
     <div class="colors">
-      <button data-color="120" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Green</button>
-      <button data-color="200" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Blue</button>
-      <button data-color="300" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Pink</button>
-      <button data-color="45" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Orange</button>
+      <button data-color="120" id="textStyling">Green</button>
+      <button data-color="200" id="textStyling">Blue</button>
+      <button data-color="300" id="textStyling">Pink</button>
+      <button data-color="45" id="textStyling">Orange</button>
     </div>
     <hr />
-    <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Game Mode</h2>
+    <h2 id="textStyling">Game Mode</h2>
     <div class="modes">
-      <button data-mode="zen" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Float</button>
-      <button data-mode="bounce" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Normal</button>
-      <button data-mode="chaos" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Intense Gravity</button>
+      <button data-mode="zen" id="textStyling">Float</button>
+      <button data-mode="bounce" id="textStyling">Normal</button>
+      <button data-mode="chaos" id="textStyling">Intense Gravity</button>
     </div>
     <hr />
-    <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Motion Blur</h2>
+    <h2 id="textStyling">Motion Blur</h2>
     <input id="blurSlider" type="range" min="0" max="0.75" step="0.01" value="0">
     <hr />
-    <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Audio</h2>
-    <button id="muteBtn" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Mute</button>
+    <h2 id="textStyling">Audio</h2>
+    <button id="muteBtn" id="textStyling">Mute</button>
     
   </div>
-    <label for="customColor" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Custom Color:</label>
-    <input type="color" id="customColor" />
+    
   </div>
   <script>
     const audioElement = document.querySelector("audio");
@@ -253,13 +256,23 @@
 
     // Prevent zooming and default touch gestures, but allow interaction with the settings button
     document.addEventListener("touchstart", (e) => {
-      if (e.target.id !== "settingsBtn" && !e.target.closest("#settingsModal")) {
+      if (
+        e.target.id !== "settingsBtn" && // Allow the settings button
+        !e.target.closest("#settingsModal") && // Allow elements inside the settings modal
+        e.target.id !== "playOverlay" && // Allow the play overlay
+        e.target.tagName !== "BUTTON" // Allow all buttons
+      ) {
         e.preventDefault();
       }
     }, { passive: false });
 
     document.addEventListener("touchmove", (e) => {
-      if (e.target.id !== "settingsBtn" && !e.target.closest("#settingsModal")) {
+      if (
+        e.target.id !== "settingsBtn" && // Allow the settings button
+        !e.target.closest("#settingsModal") && // Allow elements inside the settings modal
+        e.target.id !== "playOverlay" && // Allow the play overlay
+        e.target.tagName !== "BUTTON" // Allow all buttons
+      ) {
         e.preventDefault();
       }
     }, { passive: false });
@@ -315,8 +328,21 @@
 
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+
+    function resizeCanvas() {
+      const pixelRatio = window.devicePixelRatio || 1; // Get the device pixel ratio
+      canvas.width = window.innerWidth * pixelRatio; // Scale canvas width
+      canvas.height = window.innerHeight * pixelRatio; // Scale canvas height
+      canvas.style.width = `${window.innerWidth}px`; // Set CSS width
+      canvas.style.height = `${window.innerHeight}px`; // Set CSS height
+      ctx.scale(pixelRatio, pixelRatio); // Scale the rendering context
+    }
+
+    // Call resizeCanvas on page load
+    resizeCanvas();
+
+    // Update canvas size on window resize
+    window.addEventListener("resize", resizeCanvas);
 
     // Update mouse object to support touch and pointer events
     let mouse = { x: canvas.width / 2, y: canvas.height / 2, pressure: 0 };
@@ -493,11 +519,6 @@
 
     animate();
 
-    window.addEventListener("resize", () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
-
     const settingsBtn = document.getElementById("settingsBtn");
     const settingsModal = document.getElementById("settingsModal");
 
@@ -532,3 +553,4 @@
   </script>
 </body>
 </html>
+``` 
