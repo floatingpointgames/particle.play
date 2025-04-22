@@ -268,35 +268,31 @@
     // Update mouse object to support touch and pointer events
     let mouse = { x: canvas.width / 2, y: canvas.height / 2, pressure: 0 };
 
-    // Update touchstart to handle multiple touches
+    // Track multiple touches (up to 5 fingers)
     canvas.addEventListener("touchstart", (e) => {
-      for (const touch of e.touches) {
+      e.preventDefault(); // Prevent default behavior
+      const touches = Array.from(e.touches).slice(0, 5); // Limit to 5 touches
+      touches.forEach((touch) => {
         const x = touch.clientX;
         const y = touch.clientY;
-        mouse.x = x;
-        mouse.y = y;
-        mouse.pressure = 1; // Simulate full pressure for touch
         handleInteractionStart(x, y);
-      }
-    });
+      });
+    }, { passive: false });
 
-    // Update touchmove to handle multiple touches
     canvas.addEventListener("touchmove", (e) => {
-      for (const touch of e.touches) {
+      e.preventDefault(); // Prevent default behavior
+      const touches = Array.from(e.touches).slice(0, 5); // Limit to 5 touches
+      touches.forEach((touch) => {
         const x = touch.clientX;
         const y = touch.clientY;
-        mouse.x = x;
-        mouse.y = y;
-        mouse.pressure = 1; // Simulate full pressure for touch
         handleInteractionMove(x, y);
-      }
-    });
+      });
+    }, { passive: false });
 
-    // Update touchend to handle multiple touches
     canvas.addEventListener("touchend", (e) => {
-      mouse.pressure = 0;
-      handleInteractionEnd();
-    });
+      e.preventDefault(); // Prevent default behavior
+      handleInteractionEnd(); // Handle when a touch ends
+    }, { passive: false });
 
     // Modify interaction handlers to accept coordinates
     function handleInteractionStart(x, y) {
