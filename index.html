@@ -182,7 +182,7 @@
     <hr />
     <h2 id="textStyling">Game Mode</h2>
     <div class="modes">
-      <button data-mode="zen" id="textStyling">Float</button>
+      <button data-mode="zen" id="textStyling">Low Gravity</button>
       <button data-mode="bounce" id="textStyling">Normal</button>
       <button data-mode="chaos" id="textStyling">Intense Gravity</button>
     </div>
@@ -301,6 +301,18 @@
       // Start the game
       gameRunning = true;
       animate(); // Start the animation loop
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        // Pause the audio when the tab loses focus
+        audioElement.pause();
+      } else {
+        // Resume the audio when the tab gains focus
+        audioElement.play().catch((error) => {
+          console.error("Audio playback failed:", error);
+        });
+      }
     });
   </script>
 
