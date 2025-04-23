@@ -71,18 +71,23 @@
     #settingsModal .colors button[data-color="200"] { background: hsl(200, 100%, 45%); }
     #settingsModal .colors button[data-color="300"] { background: hsl(300, 100%, 50%); }
     #settingsModal .colors button[data-color="45"]  { background: hsl(45, 100%, 50%); }
+    #settingsModal .colors button[data-color="rainbow"] { background: linear-gradient(90deg,
+      hsl(0, 100%, 50%), hsl(32, 100%, 50%), hsl(64, 100%, 50%), 
+      hsl(131, 100%, 50%), hsl(249, 100%, 50%), hsl(265, 100%, 50%), hsl(290, 100%, 50%));
+    }
+   
     #muteBtn {
-    margin: 5px 0;
-    width: 100%;
-    padding: 8px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    color: white;
-    font-weight: bold;
-    background: #333;
-    transition: background-color 0.3s ease; /* Smooth transition for background color */
-  }
+      margin: 5px 0;
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      background: #333;
+      transition: background-color 0.3s ease; /* Smooth transition for background color */
+    }
 
     #settingsModal hr {
       border: none;
@@ -172,6 +177,7 @@
       <button data-color="200" id="textStyling">Blue</button>
       <button data-color="300" id="textStyling">Pink</button>
       <button data-color="45" id="textStyling">Orange</button>
+      <button data-color="rainbow" id="textStyling" style="color: black;">Rainbow</button>
     </div>
     <hr />
     <h2 id="textStyling">Game Mode</h2>
@@ -307,6 +313,7 @@
     let maxParticles = 300;
     let settingsOpen = false;
     let motionBlur = parseFloat(localStorage.getItem("motionBlur")) || 0.3;
+    let globalHue = 0; // Global hue for rainbow mode
 
     function applyModeSettings() {
       if (mode === "zen") {
@@ -430,11 +437,25 @@
         this.vx = (Math.random() - 0.5) * speed;
         this.vy = (Math.random() - 0.5) * speed;
         this.radius = Math.random() * 6 + 2;
-        this.hue = hueBase + Math.floor(Math.random() * 30 - 15);
+
+        if (hueBase === null) {
+          // Rainbow mode: Use a global hue value
+          this.hue = globalHue;
+        } else {
+          // Normal mode: Use the selected hueBase
+          this.hue = hueBase + Math.floor(Math.random() * 30 - 15);
+        }
+
         this.color = `hsla(${this.hue}, 100%, 70%, 1)`;
       }
 
       update() {
+        if (hueBase === null) {
+          // Update the hue dynamically in rainbow mode
+          this.hue = globalHue;
+          this.color = `hsla(${this.hue}, 100%, 70%, 1)`;
+        }
+
         if (isMouseIdle && mode === "zen") {
           this.vy += 0.005 * (Math.random() - 0.5);
           this.vx += 0.005 * (Math.random() - 0.5);
@@ -514,6 +535,11 @@
 
       connectParticles(particles);
 
+      if (hueBase === null) {
+        // Increment global hue for rainbow mode
+        globalHue = (globalHue + 1) % 360;
+      }
+
       requestAnimationFrame(animate);
     }
 
@@ -529,8 +555,15 @@
 
     document.querySelectorAll("#settingsModal .colors button").forEach(btn => {
       btn.addEventListener("click", () => {
-        hueBase = parseInt(btn.dataset.color);
-        localStorage.setItem("slimeHue", hueBase);
+        const selectedColor = btn.dataset.color;
+
+        if (selectedColor === "rainbow") {
+          hueBase = null; // Set hueBase to null to indicate rainbow mode
+        } else {
+          hueBase = parseInt(selectedColor);
+        }
+
+        localStorage.setItem("slimeHue", selectedColor);
         settingsOpen = false;
         settingsModal.style.display = "none";
       });
@@ -553,4 +586,3 @@
   </script>
 </body>
 </html>
-``` 
